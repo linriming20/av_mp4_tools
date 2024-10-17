@@ -50,6 +50,8 @@ examples:
 
  - [H264_H265的两种格式Annex B、AVCC(H264)_HVCC(H265)_265h,cc-CSDN博客](https://blog.csdn.net/weixin_43147845/article/details/137011573)
 
+ - [MP4 esds box解析_mp4decspecificdescr-CSDN博客](https://blog.csdn.net/qiuchangyong/article/details/26586829)
+
 ### 附录（demo目录结构）
 
 ```
@@ -81,6 +83,7 @@ tree
 ├── debug.h
 ├── docs
 │   ├── H264_H265的两种格式Annex B、AVCC(H264)_HVCC(H265)_265h,cc-CSDN博客.mhtml
+│   ├── MP4 esds box解析_mp4decspecificdescr-CSDN博客.mhtml
 │   └── MP4格式详解_DONGHONGBAI的专栏-CSDN博客.mhtml
 ├── mp4.c
 ├── mp4.h
@@ -182,5 +185,5 @@ tree
 └── tools
     └── mp4info.zip
 
-39 directories, 87 files
+39 directories, 88 files
 ```
