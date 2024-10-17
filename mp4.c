@@ -489,7 +489,7 @@ int mp4_demux(char *mp4_filename)
                 char start_code[4] = {0x00, 0x00, 0x00, 0x01};
                 for(int i = 0; i < metadata.stss_entry_count; i++)
                 {
-                    if(frame_index == metadata.stss_sample_number[i]) // sync sample(frame)
+                    if(frame_index == metadata.stss_sample_number[i] - 1) // sync sample(frame) // fix: stss start with 1, so should -1
                     {
                         if(metadata.video_type == VIDEO_TYPE_H265)
                         {
@@ -522,10 +522,6 @@ int mp4_demux(char *mp4_filename)
             }
         }
     }
-
-
-
-
 
 
     if(p_buf)
