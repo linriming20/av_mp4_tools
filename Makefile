@@ -31,6 +31,7 @@ CFLAGS := \
     -Imp4_box/moov/trak/mdia/minf/stbl/stsd/mp4a/esds \
     -Imp4_box/moov/trak/mdia/minf/stbl/stsz \
     -Imp4_box/moov/trak/mdia/minf/stbl/stco \
+    -Imp4_box/moov/trak/mdia/minf/stbl/co64 \
     -Imp4_box/moov/trak/mdia/minf/stbl/stts \
     -Imp4_box/moov/trak/mdia/minf/stbl/stsc \
     -Imp4_box/moov/trak/mdia/hdlr \
@@ -68,6 +69,7 @@ COMMON_SRC := \
     mp4_box/moov/trak/mdia/minf/stbl/stbl.c \
     mp4_box/moov/trak/mdia/minf/stbl/stsz/stsz.c \
     mp4_box/moov/trak/mdia/minf/stbl/stco/stco.c \
+    mp4_box/moov/trak/mdia/minf/stbl/co64/co64.c \
     mp4_box/moov/trak/mdia/minf/stbl/stts/stts.c \
     mp4_box/moov/trak/mdia/minf/stbl/stsc/stsc.c \
     mp4_box/moov/trak/mdia/hdlr/hdlr.c \

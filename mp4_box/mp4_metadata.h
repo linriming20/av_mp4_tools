@@ -75,6 +75,10 @@ typedef struct{
     /* stco info */
     uint32_t  stco_entry_count[TRACK_ID_MAX];
     uint32_t* stco_chunk_offset[TRACK_ID_MAX];
+    /* co64 info */
+    uint32_t  co64_entry_count[TRACK_ID_MAX];
+    uint64_t* co64_chunk_offset[TRACK_ID_MAX];
+
 }metadata_t, *pt_metadata;
 
 

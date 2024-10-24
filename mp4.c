@@ -124,6 +124,7 @@ int mp4_mux_h26x_aac(char *h26x_filename, uint32_t width, uint32_t height, uint3
 #define READ_HEAD_MAX_SIZE  (16)
 
 /* big endian storage change to little endian variable */
+#define U8BUF_TO_UINT64_LE(u8)  (uint32_t)((u8[7]<<0)|(u8[6]<<8)|(u8[5]<<16)|(u8[4]<<24)|((uint64_t)u8[3]<<32)|((uint64_t)u8[2]<<40)|((uint64_t)u8[1]<<48)|((uint64_t)u8[0]<<56))
 #define U8BUF_TO_UINT32_LE(u8)  (uint32_t)((u8[3]<<0)|(u8[2]<<8)|(u8[1]<<16)|(u8[0]<<24))
 #define U8BUF_TO_UINT16_LE(u8)  (uint16_t)((u8[1]<<0)|(u8[0]<<8))
 
@@ -161,6 +162,7 @@ static struct {
                         {"stss", 0},
                         {"stsc", 0},
                         {"stco", 0},
+                        {"co64", 0},
 };
 
 
@@ -287,6 +289,20 @@ static int mp4_parse_inside_box(char *p_buf, uint64_t buf_size, int enable_print
                         {
                             uint8_t *p_stco_chunk_offset = (p_stco_entry_count+4)+samples_id*sizeof(uint32_t);
                             metadata->stco_chunk_offset[cur_read_trackid][samples_id] = U8BUF_TO_UINT32_LE(p_stco_chunk_offset);
+                        }
+                    }
+                    else if(!memcmp("co64", p_buf+i, HEADER_SIZE_BOX_TYPE))
+                    {
+                        uint8_t *p_co64_entry_count = (p_buf+i-HEADER_SIZE_BOX_SIZE)/*box start*/ + HEADER_SIZE_FULLBOX;
+                        metadata->co64_entry_count[cur_read_trackid] = \
+                            (p_co64_entry_count[3] << 0) |(p_co64_entry_count[2] << 8)|\
+                            (p_co64_entry_count[1] << 16)|(p_co64_entry_count[0] << 24);
+                        DEBUG("track id: %d, co64_entry_count: %d\n", cur_read_trackid, metadata->co64_entry_count[cur_read_trackid]);
+                        metadata->co64_chunk_offset[cur_read_trackid] = calloc(sizeof(uint64_t), metadata->co64_entry_count[cur_read_trackid]);
+                        for(int samples_id = 0; samples_id < metadata->co64_entry_count[cur_read_trackid]; samples_id++)
+                        {
+                            uint8_t *p_co64_chunk_offset = (p_co64_entry_count+4)+samples_id*sizeof(uint64_t);
+                            metadata->co64_chunk_offset[cur_read_trackid][samples_id] = U8BUF_TO_UINT64_LE(p_co64_chunk_offset);
                         }
                     }
                     else if(!memcmp("stss", p_buf+i, HEADER_SIZE_BOX_TYPE))
@@ -425,7 +441,7 @@ int mp4_tree(char *mp4_filename, int enable_print, metadata_t *metadata)
 
         if(found_known_box == 0)
         {
-            if(enable_print) printf("the box(%s) is unknown in process now, just skip.\n", box_type);
+            if(enable_print) printf("the box(%s, size:%lu) is unknown in process now, just skip.\n", box_type, box_size);
             fseek(fp_mp4, box_size, SEEK_CUR); // do not parse, just skip
         }
 
@@ -445,7 +461,7 @@ int mp4_demux(char *mp4_filename)
     FILE *fp_mp4    = fopen(mp4_filename,    "rb");
     #define MP4_FRAME_BUF_MAX_SIZE     (512*1024)
     char *p_buf = calloc(1, MP4_FRAME_BUF_MAX_SIZE);
-    uint32_t file_offset = 0;
+    uint64_t file_offset = 0;
     uint32_t frame_size = 0;
     char video_filename[256] = {0};
     char audio_filename[256] = {0};
@@ -472,12 +488,39 @@ int mp4_demux(char *mp4_filename)
 
     for(int track_id = 0; track_id < TRACK_ID_MAX; track_id++)
     {
-        DEBUG("track id: %d, frame count: %d\n", track_id, metadata.stco_entry_count[track_id]);
-        for(int frame_index = 0; frame_index < metadata.stco_entry_count[track_id]; frame_index++)
+        /* stco or co64 */
+        enum{
+            CHUNK_OFFSET_STCO,
+            CHUNK_OFFSET_CO64,
+        };
+        int chunk_offset_type = -1;
+        uint32_t chunk_offset_entry_cnt = 0;
+        if(metadata.stco_entry_count[track_id] != 0)
+        {
+            chunk_offset_type = CHUNK_OFFSET_STCO;
+            chunk_offset_entry_cnt = metadata.stco_entry_count[track_id];
+        }
+        if(metadata.co64_entry_count[track_id] != 0)
+        {
+            chunk_offset_type = CHUNK_OFFSET_CO64;
+            chunk_offset_entry_cnt = metadata.co64_entry_count[track_id];
+        }
+        if(chunk_offset_type == -1)
+        {
+            printf("Unknown chunk offset, neither stco or co64.\n");
+            break;
+        }
+        DEBUG("track id: %d, frame count: %d\n", track_id, chunk_offset_entry_cnt);
+        for(int frame_index = 0; frame_index < chunk_offset_entry_cnt; frame_index++)
         {
             frame_size = metadata.stsz_entry_size[track_id][frame_index];
-            file_offset = metadata.stco_chunk_offset[track_id][frame_index];
-            DEBUG("track id: %d, frame index: %d, file offset: %d, frame size: %d\n", track_id, frame_index, file_offset, frame_size);
+            switch(chunk_offset_type)
+            {
+                case CHUNK_OFFSET_STCO: file_offset = metadata.stco_chunk_offset[track_id][frame_index]; break;
+                case CHUNK_OFFSET_CO64: file_offset = metadata.co64_chunk_offset[track_id][frame_index]; break;
+            }
+
+            DEBUG("track id: %d, frame index: %d, file offset: %lu, frame size: %d\n", track_id, frame_index, file_offset, frame_size);
 
             /* read from MP4 */
             fseek(fp_mp4, file_offset, SEEK_SET);
