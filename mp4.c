@@ -530,21 +530,73 @@ int mp4_demux(char *mp4_filename)
             if(track_id == metadata.trackid_visual)
             {
                 char start_code[4] = {0x00, 0x00, 0x00, 0x01};
+                int32_t mdat_writed_params_sets = 0; /* VPS/SPS/PPS */
                 for(int i = 0; i < metadata.stss_entry_count; i++)
                 {
                     if(frame_index == metadata.stss_sample_number[i] - 1) // sync sample(frame) // fix: stss start with 1, so should -1
                     {
-                        if(metadata.video_type == VIDEO_TYPE_H265)
+                        if(U8BUF_TO_UINT32_LE(p_buf) == metadata.sps_len) /* if sps/pps repeat in mdat box(general already in avcC box.) */
                         {
+                            uint8_t *p_sps = p_buf;
+                            uint32_t sps_len = U8BUF_TO_UINT32_LE(p_sps);
                             fwrite(start_code, 1, sizeof(start_code), fp_video);
-                            fwrite(metadata.vps, 1, metadata.vps_len, fp_video);
+                            fwrite(p_sps+sizeof(start_code), 1, sps_len, fp_video);
+
+                            uint8_t *p_pps = p_sps + sizeof(start_code) + sps_len;
+                            uint32_t pps_len = U8BUF_TO_UINT32_LE(p_pps);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_pps+sizeof(start_code), 1, pps_len, fp_video);
+
+                            uint8_t *p_slice = p_pps + sizeof(start_code) + pps_len;
+                            uint32_t slice_len = U8BUF_TO_UINT32_LE(p_slice);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_slice+sizeof(start_code), 1, slice_len, fp_video);
+
+                            mdat_writed_params_sets = 1;
                         }
-                        fwrite(start_code, 1, sizeof(start_code), fp_video);
-                        fwrite(metadata.sps, 1, metadata.sps_len, fp_video);
-                        fwrite(start_code, 1, sizeof(start_code), fp_video);
-                        fwrite(metadata.pps, 1, metadata.pps_len, fp_video);
+                        else if(U8BUF_TO_UINT32_LE(p_buf) == metadata.vps_len) /* if vps/sps/pps repeat in mdat box(general already in hvcC box.) */
+                        {
+                            uint8_t *p_vps = p_buf;
+                            uint32_t vps_len = U8BUF_TO_UINT32_LE(p_vps);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_vps+sizeof(start_code), 1, vps_len, fp_video);
+
+                            uint8_t *p_sps = p_vps + sizeof(start_code) + vps_len;
+                            uint32_t sps_len = U8BUF_TO_UINT32_LE(p_sps);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_sps+sizeof(start_code), 1, sps_len, fp_video);
+
+                            uint8_t *p_pps = p_sps + sizeof(start_code) + sps_len;
+                            uint32_t pps_len = U8BUF_TO_UINT32_LE(p_pps);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_pps+sizeof(start_code), 1, pps_len, fp_video);
+
+                            uint8_t *p_slice = p_pps + sizeof(start_code) + pps_len;
+                            uint32_t slice_len = U8BUF_TO_UINT32_LE(p_slice);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(p_slice+sizeof(start_code), 1, slice_len, fp_video);
+
+                            mdat_writed_params_sets = 1;
+                        }
+                        else /* usually */
+                        {
+                            if(metadata.video_type == VIDEO_TYPE_H265)
+                            {
+                                fwrite(start_code, 1, sizeof(start_code), fp_video);
+                                fwrite(metadata.vps, 1, metadata.vps_len, fp_video);
+                            }
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(metadata.sps, 1, metadata.sps_len, fp_video);
+                            fwrite(start_code, 1, sizeof(start_code), fp_video);
+                            fwrite(metadata.pps, 1, metadata.pps_len, fp_video);
+                        }
+
+                        break;
                     }
                 }
+
+                if(mdat_writed_params_sets) /* has already been written above, just skip it */
+                    continue;
                 p_buf[0] = 0x00;
                 p_buf[1] = 0x00;
                 p_buf[2] = 0x00;
