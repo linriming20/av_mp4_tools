@@ -390,7 +390,7 @@ static int mp4_parse_inside_box(char *p_buf, uint64_t buf_size, int enable_print
 
 /* mp4_filename(in): must not be NULL;
  * enable_print(in): print the mp4 box as tree;
- * metadata(out): it will be set params if is not NULL
+ * metadata(out): it will be set params if is not NULL, and it will alloc memory in it, so you should call free_metadata_memory function by yourself.
  */
 int mp4_tree(char *mp4_filename, int enable_print, metadata_t *metadata)
 {
@@ -441,7 +441,7 @@ int mp4_tree(char *mp4_filename, int enable_print, metadata_t *metadata)
 
         if(found_known_box == 0)
         {
-            if(enable_print) printf("the box(%s, size:%lu) is unknown in process now, just skip.\n", box_type, box_size);
+            if(enable_print) printf("the box(%s, size:%lu) is unknown in program now, just skip.\n", box_type, box_size);
             fseek(fp_mp4, box_size, SEEK_CUR); // do not parse, just skip
         }
 
@@ -520,7 +520,7 @@ int mp4_demux(char *mp4_filename)
                 case CHUNK_OFFSET_CO64: file_offset = metadata.co64_chunk_offset[track_id][frame_index]; break;
             }
 
-            DEBUG("track id: %d, frame index: %d, file offset: %lu, frame size: %d\n", track_id, frame_index, file_offset, frame_size);
+            DEBUG("[trackid: %d] \t[frame index: %d] \t[file offset: %lu(0x%lx)] \t[size: %d(0x%x)]\n", track_id, frame_index, file_offset, file_offset, frame_size, frame_size);
 
             /* read from MP4 */
             fseek(fp_mp4, file_offset, SEEK_SET);
@@ -566,6 +566,8 @@ int mp4_demux(char *mp4_filename)
         }
     }
 
+    /* free memory, because it alloc in mp4_tree function if params "metadata" is not NULL */
+    free_metadata_memory(&metadata);
 
     if(p_buf)
         free(p_buf);
