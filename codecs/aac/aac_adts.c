@@ -45,18 +45,9 @@ int get_aac_adts_frame(FILE *fp, uint8_t *p_frame_data, adts_header_t *pt_header
 }
 
 
-int generate_aac_adts_header_v1(uint32_t data_size, uint32_t channels, uint32_t samplerate, uint8_t *p_out_buf, uint32_t *p_out_buf_len)
+int aac_adts_samplerate_2_freq_index(uint32_t samplerate)
 {
-    int id = 0; // 0:MPEG_4
-    int crc = 1;
-    int profile = 1; // AAC LC
     int freq_idx = 0;
-
-    if(!data_size || !p_out_buf || !p_out_buf_len)
-    {
-        printf("[%s:%d] Params invalid!\n", __FUNCTION__, __LINE__);
-        return -1;
-    }
 
     switch(samplerate)
     {
@@ -75,6 +66,49 @@ int generate_aac_adts_header_v1(uint32_t data_size, uint32_t channels, uint32_t 
         case 7350 : freq_idx = 0xc; break;
         default   : freq_idx = 0xd; break;
     }
+    return freq_idx;
+}
+
+
+int aac_adts_freq_index_2_samplerate(uint32_t freq_index)
+{
+    int samplerate = 0;
+
+    switch(freq_index)
+    {
+        case 0x0: samplerate = 96000; break;
+        case 0x1: samplerate = 88200; break;
+        case 0x2: samplerate = 64000; break;
+        case 0x3: samplerate = 48000; break;
+        case 0x4: samplerate = 44100; break;
+        case 0x5: samplerate = 32000; break;
+        case 0x6: samplerate = 24000; break;
+        case 0x7: samplerate = 22050; break;
+        case 0x8: samplerate = 16000; break;
+        case 0x9: samplerate = 12000; break;
+        case 0xa: samplerate = 11025; break;
+        case 0xb: samplerate = 8000; break;
+        case 0xc: samplerate = 7350; break;
+        default : samplerate = 0; break;
+    }
+    return samplerate;
+}
+
+
+int generate_aac_adts_header_v1(uint32_t data_size, uint32_t channels, uint32_t samplerate, uint8_t *p_out_buf, uint32_t *p_out_buf_len)
+{
+    int id = 0; // 0:MPEG_4
+    int crc = 1;
+    int profile = 1; // AAC LC
+    int freq_idx = 0;
+
+    if(!data_size || !p_out_buf || !p_out_buf_len)
+    {
+        printf("[%s:%d] Params invalid!\n", __FUNCTION__, __LINE__);
+        return -1;
+    }
+
+    freq_idx = aac_adts_samplerate_2_freq_index(samplerate);
 
     // fill in ADTS data
     p_out_buf[0] = (uint8_t) 0xFF;

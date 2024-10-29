@@ -6,20 +6,38 @@
 
 
 
+/* the nalu type of H264 */
 typedef enum{
-    NALU_TYPE_SLICE    = 0x1,
-    NALU_TYPE_DPA      = 0x2,
-    NALU_TYPE_DPB      = 0x3,
-    NALU_TYPE_DPC      = 0x4,
-    NALU_TYPE_IDR      = 0x5,
-    NALU_TYPE_SEI      = 0x6,
-    NALU_TYPE_SPS      = 0x7,
-    NALU_TYPE_PPS      = 0x8,
-    NALU_TYPE_AUD      = 0x9,
-    NALU_TYPE_EOSEQ    = 0xa,
-    NALU_TYPE_EOSTREAM = 0xb,
-    NALU_TYPE_FILL     = 0xc,
+    H264_NALU_UNKNOWN = 0,
+    H264_NALU_PSLICE      = 1,
+    H264_NALU_SLICE_DPA   = 2,
+    H264_NALU_SLICE_DPB   = 3,
+    H264_NALU_SLICE_DPC   = 4,
+    H264_NALU_ISLICE      = 5,
+    H264_NALU_SEI         = 6,
+    H264_NALU_SPS         = 7,
+    H264_NALU_PPS         = 8,
+    H264_NALU_AU_DELIMITER= 9,
+    /* ref_idc == 0 for 6,9,10,11,12 */
+    H264_NALU_END_OF_SEQ  = 10,
+    H264_NALU_END_OF_STREAM = 11,
+    H264_NALU_FILLER_DATA = 12,
+    /* 13-23 */
+    H264_NALU_SPS_EXT     = 13,
+    H264_NALU_PREFIX      = 14,
+    H264_NALU_SUBSET_SPS  = 15,
+    H264_NALU_DEPTH_PS    = 16,
+    H264_NALU_RESERVED_17 = 17,
+    H264_NALU_RESERVED_18 = 18,
+    H264_NALU_SLICE_WP    = 19,
+    H264_NALU_SLICE_EXT   = 20,
+    H264_NALU_SLICE_3D_EXT= 21,
+    H264_NALU_RESERVED_22 = 22,
+    H264_NALU_RESERVED_23 = 23,
+
+    H264_NALU_BUTT
 }h264_nalu_type_e;
+
 
 
 
@@ -42,5 +60,17 @@ typedef struct{
  ************************************************************************/
 int get_one_H264_AnnexB_nalu(FILE *fp, uint8_t *p_nalu_data, h264_nalu_info_t *pt_nalu_info);
 
+
+/************************************************************************
+ * function describe: get one frame from h264 file.
+ * params:
+ *   [fp]: H.264 file handler.(in)
+ *   [p_frame_data]: the function will fill the frame data in it, must be
+ *                alloced memory before call this function.(out)
+ *   [frame_size]: the frame size in data.(out)
+ *   [is_keyframe]: is the sync frame.(out)
+ * return: 0:success other:error
+ ************************************************************************/
+int get_one_H264_frame(FILE *fp, unsigned char *p_frame_data, uint32_t *frame_size, uint32_t *is_keyframe);
 
 #endif /* __H264_ANNEXB_H__ */

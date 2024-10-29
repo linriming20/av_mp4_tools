@@ -476,15 +476,15 @@ int mp4_demux(char *mp4_filename)
     if(metadata.video_type == VIDEO_TYPE_H264)video_type="h264";
     if(metadata.video_type == VIDEO_TYPE_H265)video_type="h265";
     snprintf(video_filename, sizeof(video_filename), "out_video_%dx%d.%s", metadata.video_width, metadata.video_height, video_type);
-    snprintf(audio_filename, sizeof(video_filename), "out_audio_%d_%dch.aac", metadata.audio_samplerate_idx, metadata.audio_channel_cnt);
+    snprintf(audio_filename, sizeof(video_filename), "out_audio_%d_%dch.aac", aac_adts_freq_index_2_samplerate(metadata.audio_samplerate_idx), metadata.audio_channel_cnt);
     FILE *fp_video  = fopen(video_filename,  "wb");
     FILE *fp_audio  = fopen(audio_filename,  "wb");
 
 
     printf("[video info] resolution: %dx%d, vps_len: %d sps_len: %d, pps_len: %d\n",
         metadata.video_width, metadata.video_height, metadata.vps_len, metadata.sps_len, metadata.pps_len);
-    printf("[audio info] sample rate index: %d, channels: %d\n",
-        metadata.audio_samplerate_idx, metadata.audio_channel_cnt);
+    printf("[audio info] sampling rate: %d, channels: %d\n",
+        aac_adts_freq_index_2_samplerate(metadata.audio_samplerate_idx), metadata.audio_channel_cnt);
 
     for(int track_id = 0; track_id < TRACK_ID_MAX; track_id++)
     {

@@ -97,4 +97,16 @@ typedef struct{
 int get_one_H265_AnnexB_nalu(FILE *fp, uint8_t *p_nalu_data, h265_nalu_info_t *pt_nalu_info);
 
 
+/************************************************************************
+ * function describe: get one frame from h265 file.
+ * params:
+ *   [fp]: H.265 file handler.(in)
+ *   [p_frame_data]: the function will fill the frame data in it, must be
+ *                alloced memory before call this function.(out)
+ *   [frame_size]: the frame size in data.(out)
+ *   [is_keyframe]: is the sync frame.(out)
+ * return: 0:success other:error
+ ************************************************************************/
+int get_one_H265_frame(FILE *fp, unsigned char *p_frame_data, uint32_t *frame_size, uint32_t *is_keyframe);
+
 #endif /* __H265_ANNEXB_H__ */

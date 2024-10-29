@@ -70,8 +70,41 @@ typedef struct{
  ************************************************************************/
 int get_aac_adts_frame(FILE *fp, uint8_t *p_frame_data, adts_header_t *pt_header_info);
 
+/************************************************************************
+ * function describe: sampling rate and frequence convert(base on AAC ADTS
+ *                    header format)
+ * params: sampling rate or frequence index (in)
+ * return: frequence index or sample rate
+ ************************************************************************/
+int aac_adts_samplerate_2_freq_index(uint32_t samplerate);
+int aac_adts_freq_index_2_samplerate(uint32_t freq_index);
 
+
+/************************************************************************
+ * function describe: generate AAC ADTS header.
+ * params:
+ *   [data_size]: adts frame size which include header and data.(in)
+ *   [channels]: channels.(in)
+ *   [samplerate]: sample rate. (in)
+ *       only support 7350/8000/11025/12000/16000/22050/24000/32000/44100/
+ *       48000/64000/88200/96000.
+ *   [p_out_buf]: will fill data in it, so must alloc memory first.(out)
+ *   [p_out_buf_len]: p_out_buf fill size, always equal 7(=AAC_ADTS_HEADER_SIZE).(out)
+ * return: 0-success  other-error
+ ************************************************************************/
 int generate_aac_adts_header_v1(uint32_t data_size, uint32_t channels, uint32_t samplerate, uint8_t *p_out_buf, uint32_t *p_out_buf_len);
+
+
+/************************************************************************
+ * function describe: generate AAC ADTS header.
+ * params:
+ *   [data_size]: adts frame size which include header and data.(in)
+ *   [channels]: channels.(in)
+ *   [freq_idx]: 0x0~0xc.(in)
+ *   [p_out_buf]: will fill data in it, so must alloc memory first.(out)
+ *   [p_out_buf_len]: p_out_buf fill size, always equal 7(=AAC_ADTS_HEADER_SIZE).(out)
+ * return: 0-success  other-error
+ ************************************************************************/
 int generate_aac_adts_header_v2(uint32_t data_size, uint32_t channels, uint32_t freq_idx, uint8_t *p_out_buf, uint32_t *p_out_buf_len);
 
 

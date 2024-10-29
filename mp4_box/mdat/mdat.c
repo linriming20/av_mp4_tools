@@ -50,21 +50,21 @@ int write_mdat_box(FILE *fp_mp4, FILE *fp_h264, FILE *fp_aac, char *p_buf, metad
                     }
                     DEBUG(GREEN"[video] get one H.264 NALU(0x%02X) with length: %d\n"COLOR_END, p_buf[h264_nalu_info.startcode_len], h264_nalu_info.data_len);
 
-                    if (h264_nalu_info.nalu_type == NALU_TYPE_SPS && metadata->sps_len == 0)
+                    if (h264_nalu_info.nalu_type == H264_NALU_SPS && metadata->sps_len == 0)
                     {
                         DEBUG("NALU_TYPE_SPS | nalu_info.data_len: %d\n", h264_nalu_info.data_len);
                         memcpy(metadata->sps, p_buf+h264_nalu_info.startcode_len, h264_nalu_info.data_len-h264_nalu_info.startcode_len);
                         metadata->sps_len = h264_nalu_info.data_len-h264_nalu_info.startcode_len;
                     }
-                    else if (h264_nalu_info.nalu_type == NALU_TYPE_PPS && metadata->pps_len == 0)
+                    else if (h264_nalu_info.nalu_type == H264_NALU_PPS && metadata->pps_len == 0)
                     {
                         DEBUG("NALU_TYPE_PPS | nalu_info.data_len: %d\n", h264_nalu_info.data_len);
                         memcpy(metadata->pps, p_buf+h264_nalu_info.startcode_len, h264_nalu_info.data_len-h264_nalu_info.startcode_len);
                         metadata->pps_len = h264_nalu_info.data_len-h264_nalu_info.startcode_len;
                     }
 
-                }while((h264_nalu_info.nalu_type != NALU_TYPE_IDR) &&\
-                                 (h264_nalu_info.nalu_type != NALU_TYPE_SLICE));
+                }while((h264_nalu_info.nalu_type != H264_NALU_ISLICE) &&\
+                                 (h264_nalu_info.nalu_type != H264_NALU_PSLICE));
 
                 p_buf[0] = ((h264_nalu_info.data_len-h264_nalu_info.startcode_len) >> 24) & 0xFF;
                 p_buf[1] = ((h264_nalu_info.data_len-h264_nalu_info.startcode_len) >> 16) & 0xFF;
@@ -75,7 +75,7 @@ int write_mdat_box(FILE *fp_mp4, FILE *fp_h264, FILE *fp_aac, char *p_buf, metad
                 metadata->stsz_entry_size[TRACK_ID_VIDEO][metadata->stsz_sample_count[TRACK_ID_VIDEO]] = h264_nalu_info.data_len;
                 metadata->stsz_sample_count[TRACK_ID_VIDEO]++;
 
-                if (h264_nalu_info.nalu_type == NALU_TYPE_IDR)
+                if (h264_nalu_info.nalu_type == H264_NALU_ISLICE)
                 {
                     metadata->stss_sample_number[metadata->stss_entry_count] = metadata->stsz_sample_count[TRACK_ID_VIDEO]; // frame index
                     metadata->stss_entry_count++;
